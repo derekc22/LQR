@@ -68,15 +68,12 @@ def main():
     reset(m, d, "up")
 
     viewer = mujoco.viewer.launch_passive(m, d)
-    viewer.opt.frame = mujoco.mjtFrame.mjFRAME_WORLD
+    # viewer.opt.frame = mujoco.mjtFrame.mjFRAME_WORLD
     
-    # print(get_body_size(m, "pole"))
-    # exit()
-
     to_val = {
         mc: get_body_mass(m, "cart"),
         mp: get_body_mass(m, "pole"),
-        l: 0.6,
+        l: get_body_size(m, "pole")[1],
         Icm: get_body_inertia(m, "pole")[1], # Iyy
         g: 9.81,
     }
@@ -102,8 +99,9 @@ def main():
 
         q = get_q(d)
         u = - K_lqr @ q
-        print(u)
-        d.ctrl = u
+        n = 7*np.random.rand()
+        # print(u, n)
+        d.ctrl = u + n
         mujoco.mj_step(m, d)
         
         viewer.sync()

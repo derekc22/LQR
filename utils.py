@@ -29,7 +29,10 @@ def get_body_mass(m: mujoco.MjModel,
 
 def get_body_size(m: mujoco.MjModel, 
                   body: str) -> np.ndarray:
-    return m.geom_size[m.geom_bodyid == get_body_id(m, body)][0]
+    geom_sizes = m.geom_size[m.geom_bodyid == get_body_id(m, body)]
+    return geom_sizes[0]
+    # The shape of geom_sizes is always (N, 3) - where N is the number of geoms for that body
+    # We return geom_sizes[0] to return the geom_size array associated with the first chronological geom
 
 
 def get_gravity(m: mujoco.MjModel) -> int:
