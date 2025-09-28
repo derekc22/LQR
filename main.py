@@ -2,77 +2,108 @@ import numpy as np
 import mujoco
 from sympy import symbols, Matrix, solve, zeros, pprint
 from utils import *
+from derivation2 import Aup, Bup, mc, mp, l, Icm, g
+from scipy.linalg import solve_continuous_are
+
 
 # Scalars
-p1, p2, p3 = symbols("p1 p2 p3")
+p = symbols( "p11 p12 p13 p14 p22 p23 p24 p33 p34 p44")
+p11, p12, p13, p14, p22, p23, p24, p33, p34, p44 = p
 
-q11 = 1
+
+q11 = 131   # angle (very important)
 q12 = 0
-q21 = 0
-q22 = 1
-r1 = 1
-m = 1
-l = 1
-g = -9.81
+q13 = 0
+q14 = 0
+q22 = 25    # angular velocity (secondary)
+q23 = 0
+q24 = 0
+q33 = 10     # cart position (less important)
+q34 = 0
+q44 = 1     # cart velocity (least important)
 
-
-
-# 1) Full nonlinear dynamics:                              ml^2*θ̈ + mglsin(θ) = u
-# 2) Isolate θ̈:                                            θ̈ = 1/ml^2 * (u-mglsin(θ))
-# 3) Define state variables:                               x1 = θ, x2 = θ̇
-# 4) Define state vector x(t) and input vector u(t):       x(t) = [x1; x2], u(t) = [u]
-# 5) Form state equation ẋ(t):                             ẋ(t) = [ẋ1; ẋ2] = [x2; 1/ml^2 * (u-mgl*sin(x1))]
-# 6) Solve for equilibrium points, x̄:                      ẋ(t) = 0 for u = 0 → x̄ = (nπ, 0)
-# 7) Linearize dynamics around x̄ via Taylor Series:        ẋ(t) = Ax(t) + Bu(t)
-
-# Step 7) yields
-A = Matrix([
-    [0, 1],
-    [-g/l, 0]    
-])
-
-B = Matrix([0, 1/m*l**2])
+r1 = 5
 
 # Define cost matrices
-Q = Matrix([
-    [q11, q12],
-    [q21, q22]
+Q = np.array([
+    [q11, q12, q13, q14],
+    [q12, q22, q23, q24],
+    [q13, q23, q33, q34],
+    [q14, q24, q34, q44],
 ])
 
-R = Matrix([r1])
+R = np.array([[r1]])
+
+# P = Matrix([
+#     [p01, p02, p03, p04],
+#     [p02, p06, p07, p08],    
+#     [p03, p07, p11, p12],    
+#     [p04, p08, p12, p16],    
+# ])
 
 P = Matrix([
-    [p1, p2],
-    [p2, p3]    
+    [p11, p12, p13, p14],
+    [p12, p22, p23, p24],
+    [p13, p23, p33, p34],
+    [p14, p24, p34, p44],
 ])
 
-V = P@A + A.T@P + Q - P@B@R.inv()@B.T@P
+    
 
-def lqr(x):
-    
-    candidates = solve(V - zeros(2), (p1, p2, p3))
-    
-    sol = [ c for c in candidates if all(v > 0 for v in c) ][0]
-    # print(sol)
-    # exit()
+def get_q(d):
+    return np.array([
+        d.qpos[1], 
+        d.qvel[1], 
+        d.qpos[0], 
+        d.qvel[0]
+    ])
 
-    K_lqr = - R @ B.T @ P.subs([ (p1, sol[0]), (p2, sol[1]), (p3, sol[2]) ])
-    u = K_lqr @ x
-    
-    pprint(u)
-    
-    
+
+
 
 def main():
     
+
     m, d = load_model("inverted_pendulum.xml")
     reset(m, d, "up")
 
     viewer = mujoco.viewer.launch_passive(m, d)
+    viewer.opt.frame = mujoco.mjtFrame.mjFRAME_WORLD
+    
+    # print(get_body_size(m, "pole"))
+    # exit()
+
+    to_val = {
+        mc: get_body_mass(m, "cart"),
+        mp: get_body_mass(m, "pole"),
+        l: 0.6,
+        Icm: get_body_inertia(m, "pole")[1], # Iyy
+        g: 9.81,
+    }
+
+
+    A = Aup.xreplace(to_val)
+    B = Bup.xreplace(to_val)
+
+
+    # V = P@A + A.T@P + Q - P@B@R.inv()@B.T@P
+    # candidates = solve(V - zeros(4), p)
+    # sol = [ c for c in candidates if all(v > 0 for v in c) ][0]
+    # K_lqr = R @ B.T @ P.subs(list(zip(p, sol)))
+
+    P = solve_continuous_are(np.array(A).astype(float), 
+                             np.array(B).astype(float), 
+                             Q, R)
+    K_lqr = np.linalg.inv(R) @ B.T @ P
+
+
     
     for t in range(1000000000):
 
-        d.ctrl = lqr(d.qpos)
+        q = get_q(d)
+        u = - K_lqr @ q
+        print(u)
+        d.ctrl = u
         mujoco.mj_step(m, d)
         
         viewer.sync()
