@@ -2,7 +2,7 @@ import numpy as np
 import mujoco
 from sympy import symbols, Matrix, solve, zeros, pprint
 from utils import *
-from derivation2 import Aup, Bup, mc, mp, l, Icm, g
+from derivation import Aup, Bup, mc, mp, l, Icm, g
 from scipy.linalg import solve_continuous_are
 
 
@@ -11,18 +11,18 @@ p = symbols( "p11 p12 p13 p14 p22 p23 p24 p33 p34 p44")
 p11, p12, p13, p14, p22, p23, p24, p33, p34, p44 = p
 
 
-q11 = 131   # angle (very important)
+q11 = 25       # angle (very important)
 q12 = 0
 q13 = 0
 q14 = 0
-q22 = 25    # angular velocity (secondary)
+q22 = 12.5     # angular velocity (secondary)
 q23 = 0
 q24 = 0
-q33 = 10     # cart position (less important)
+q33 = 10       # cart position (less important)
 q34 = 0
-q44 = 1     # cart velocity (least important)
+q44 = 1        # cart velocity (least important)
 
-r1 = 5
+r1 = 0.1
 
 # Define cost matrices
 Q = np.array([
@@ -34,12 +34,6 @@ Q = np.array([
 
 R = np.array([[r1]])
 
-# P = Matrix([
-#     [p01, p02, p03, p04],
-#     [p02, p06, p07, p08],    
-#     [p03, p07, p11, p12],    
-#     [p04, p08, p12, p16],    
-# ])
 
 P = Matrix([
     [p11, p12, p13, p14],
@@ -64,11 +58,11 @@ def get_q(d):
 def main():
     
 
-    m, d = load_model("inverted_pendulum.xml")
+    m, d = load_model("assets/inverted_pendulum.xml")
     reset(m, d, "up")
 
     viewer = mujoco.viewer.launch_passive(m, d)
-    # viewer.opt.frame = mujoco.mjtFrame.mjFRAME_WORLD
+    viewer.opt.frame = mujoco.mjtFrame.mjFRAME_WORLD
     
     to_val = {
         mc: get_body_mass(m, "cart"),
@@ -83,7 +77,7 @@ def main():
     B = Bup.xreplace(to_val)
 
 
-    # V = P@A + A.T@P + Q - P@B@R.inv()@B.T@P
+    # V = P@A + A.T@P + Q - P@B@np.linalg.inv(R)@B.T@P
     # candidates = solve(V - zeros(4), p)
     # sol = [ c for c in candidates if all(v > 0 for v in c) ][0]
     # K_lqr = R @ B.T @ P.subs(list(zip(p, sol)))
@@ -91,6 +85,7 @@ def main():
     P = solve_continuous_are(np.array(A).astype(float), 
                              np.array(B).astype(float), 
                              Q, R)
+    
     K_lqr = np.linalg.inv(R) @ B.T @ P
 
 
@@ -99,10 +94,10 @@ def main():
 
         q = get_q(d)
         u = - K_lqr @ q
-        n = 7*np.random.rand()
-        # print(u, n)
-        d.ctrl = u + n
+        # n = 7*np.random.rand()
+        d.ctrl = u #+ n
         mujoco.mj_step(m, d)
+        print(u)
         
         viewer.sync()
 

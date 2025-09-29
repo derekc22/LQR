@@ -8,38 +8,26 @@ def pprint_v(expr):
     pprint_(expr.expand())
 
 # constants
-mc, mp, l, Icm, g= symbols('mc mp l Icm g')
+mc, mp, l, Icm, g = symbols('mc mp l Icm g')
 
 # variables
 t, u = symbols('t u')
 
-# symbols
-xc_dot_sym, xc_ddot_sym, xp_dot_sym, yp_dot_sym, theta_dot_sym, theta_ddot_sym = symbols(
-    "ẋc ẍc ẋp ẏp θ̇ θ̈"
-)
 
 theta = Function('θ')(t)
 xc = Function('xc')(t)
-xp = xc - (l/2)*sin(theta)
-yp = (l/2)*cos(theta)
+xp = xc + (l/2)*sin(theta)
+zp = (l/2)*cos(theta)
 
-to_sym = {
-    Derivative(xc, t): xc_dot_sym,
-    Derivative(xc, t, 2): xc_ddot_sym,
-    Derivative(xp, t): xp_dot_sym,
-    Derivative(yp, t): yp_dot_sym,
-    Derivative(theta, t): theta_dot_sym,
-    Derivative(theta, t, 2): theta_ddot_sym,
-}
 
 xc_dot = diff(xc, t)
 xp_dot = diff(xp, t)
-yp_dot = diff(yp, t)
+zp_dot = diff(zp, t)
 theta_dot = diff(theta, t)
 
 
 Tcart = (1/2)*mc*xc_dot**2
-Tpole = (1/2)*mp*(xp_dot**2 + yp_dot**2) + (1/2)*Icm*theta_dot**2
+Tpole = (1/2)*mp*(xp_dot**2 + zp_dot**2) + (1/2)*Icm*theta_dot**2
 T = Tcart + Tpole
 
 Vcart = 0
@@ -47,10 +35,10 @@ Vpole = mp*g*(l/2)*cos(theta)
 V = Vcart + Vpole
 
 
-# construct lagrangian
+# Construct lagrangian
 L = T - V
 
-# construct euler-lagrange EOM
+# Construct euler-lagrange EOMs
 partialL_theta_sym = diff(L, theta)
 partialL_theta_dot_sym = diff(L, theta_dot)
 ddt_partialL_theta_dot_sym = diff(partialL_theta_dot_sym, t)
@@ -102,17 +90,32 @@ sol_eq = solve(
 )
 
 
-to_up = zip((x1, x2, x3, x4), sol_eq[0])
+to_up = list(zip((x1, x2, x3, x4), sol_eq[0]))
 Aup = xt_dot.jacobian(xt).subs(to_up)
-Bup = xt_dot.jacobian(xt).subs(to_up)
-pprint(Aup)
+Bup = xt_dot.jacobian(ut).subs(to_up)
+# pprint(Aup)
+# pprint(Bup)
 
-to_down = zip((x1, x2, x3, x4), sol_eq[1])
+to_down = list(zip((x1, x2, x3, x4), sol_eq[1]))
 Adown = xt_dot.jacobian(xt).subs(to_down)
-Bdown = xt_dot.jacobian(xt).subs(to_down)
-pprint(Adown)
+Bdown = xt_dot.jacobian(ut).subs(to_down)
+# pprint(Adown)
 
 
+
+
+# # symbols
+# xc_dot_sym, xc_ddot_sym, xp_dot_sym, zp_dot_sym, theta_dot_sym, theta_ddot_sym = symbols(
+#     "ẋc ẍc ẋp ẏp θ̇ θ̈"
+# )
+# to_sym = {
+#     xc_dot: xc_dot_sym,
+#     xc_ddot: xc_ddot_sym,
+#     xp_dot: xp_dot_sym,
+#     zp_dot: zp_dot_sym,
+#     theta_dot: theta_dot_sym,
+#     theta_ddot: theta_ddot_sym,
+# }
 
 
 
