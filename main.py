@@ -11,16 +11,16 @@ p = symbols( "p11 p12 p13 p14 p22 p23 p24 p33 p34 p44")
 p11, p12, p13, p14, p22, p23, p24, p33, p34, p44 = p
 
 
-q11 = 25       # angle (very important)
+q11 = 30       # angle (very important)
 q12 = 0
 q13 = 0
 q14 = 0
-q22 = 12.5     # angular velocity (secondary)
+q22 = 25       # angular velocity (secondary)
 q23 = 0
 q24 = 0
-q33 = 10       # cart position (less important)
+q33 = 20       # cart position (less important)
 q34 = 0
-q44 = 1        # cart velocity (least important)
+q44 = 5        # cart velocity (least important)
 
 r1 = 0.1
 
@@ -97,7 +97,7 @@ def main():
         # n = 7*np.random.rand()
         d.ctrl = u #+ n
         mujoco.mj_step(m, d)
-        print(u)
+        # print(u)
         
         viewer.sync()
 

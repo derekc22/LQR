@@ -39,16 +39,16 @@ V = Vcart + Vpole
 L = T - V
 
 # Construct euler-lagrange EOMs
-partialL_theta_sym = diff(L, theta)
-partialL_theta_dot_sym = diff(L, theta_dot)
-ddt_partialL_theta_dot_sym = diff(partialL_theta_dot_sym, t)
+partialL_theta = diff(L, theta)
+partialL_theta_dot = diff(L, theta_dot)
+ddt_partialL_theta_dot = diff(partialL_theta_dot, t)
 
-partialL_xc_sym = diff(L, xc)
-partialL_xc_dot_sym = diff(L, xc_dot)
-ddt_partialL_xc_dot_sym = diff(partialL_xc_dot_sym, t)
+partialL_xc = diff(L, xc)
+partialL_xc_dot = diff(L, xc_dot)
+ddt_partialL_xc_dot = diff(partialL_xc_dot, t)
 
-eom_theta = Eq(ddt_partialL_theta_dot_sym - partialL_theta_sym, 0)
-eom_xc = Eq(ddt_partialL_xc_dot_sym - partialL_xc_sym, u)
+eom_theta = Eq(ddt_partialL_theta_dot - partialL_theta, 0)
+eom_xc = Eq(ddt_partialL_xc_dot - partialL_xc, u)
 
 # Isolate ẍc, θ̈ 
 sol = solve( (eom_theta, eom_xc), (Derivative(xc, t, 2), Derivative(theta, t, 2)) )
