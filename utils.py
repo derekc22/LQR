@@ -6,13 +6,13 @@ def load_model(model_path: str) -> tuple[mujoco.MjModel, mujoco.MjData]:
     d = mujoco.MjData(m)
     return m, d
 
-def reset(m: mujoco.MjModel, 
-          d: mujoco.MjData, 
-          keyframe: str) -> None:
+def reset_stoch(m: mujoco.MjModel, 
+                d: mujoco.MjData, 
+                keyframe: str) -> None:
     init_qpos = m.keyframe(keyframe).qpos
     init_qvel = m.keyframe(keyframe).qvel
     mujoco.mj_resetData(m, d) 
-    d.qpos = np.random.uniform(-1, 1) * init_qpos
+    d.qpos = np.random.uniform(-1.5, 1.5) * init_qpos
     d.qvel = init_qvel
     mujoco.mj_forward(m, d)
     

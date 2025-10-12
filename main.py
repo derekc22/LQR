@@ -58,11 +58,12 @@ def get_q(d):
 def main():
     
 
-    m, d = load_model("assets/inverted_pendulum.xml")
-    reset(m, d, "up")
+    m, d = load_model("cartpole.xml")
+    reset_stoch(m, d, "up")
 
     viewer = mujoco.viewer.launch_passive(m, d)
     viewer.opt.frame = mujoco.mjtFrame.mjFRAME_WORLD
+    viewer.cam.distance = 8.0  # Increase this value to zoom out
     
     to_val = {
         mc: get_body_mass(m, "cart"),
