@@ -1,1 +1,1 @@
-!(./media/record.gif)
+![](./media/record.gif)
